@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Deepjob · S1–S27 交互原型</title>
+<style>
+:root{
+  --bg:#FBF6F1;
+  --card:#FFFFFF;
+  --ink:#10132B;
+  --ink2:#101330;
+  --label:#4A4560;
+  --sub:#7A7488;
+  --muted:#8A8496;
+  --muted2:#A79FB2;
+  --line:#EDE2DA;
+  --line2:#F0E4DC;
+  --accent:#F0563F;
+  --accent2:#E0523A;
+  --accent3:#FE6A49;
+  --chip:#FFF0EA;
+  --green:#2E9E7E;
+  --grad:linear-gradient(90deg,#FC6B4A 0%,#F04A70 55%,#A83380 100%);
+  --grad-diag:linear-gradient(135deg,#FC6B4A 0%,#F04A70 50%,#8C2E7A 100%);
+  --stroke-grad:linear-gradient(135deg,#FC6B4A,#F04A70 50%,#8C2E7A);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans TC",sans-serif;
+  background:#17131F;color:#fff;overflow:hidden;
+}
+.app{display:flex;height:100vh;width:100vw}
+
+/* ---------- sidebar ---------- */
+.side{
+  width:246px;flex:0 0 246px;height:100vh;background:#1F1A29;border-right:1px solid #2C2537;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.side h1{font-size:14px;font-weight:700;margin:0;padding:20px 20px 4px;letter-spacing:.02em}
+.side .sub{font-size:11px;color:#8C84A0;padding:0 20px 14px;line-height:1.6}
+.side .list{overflow-y:auto;flex:1;padding:0 10px 16px}
+.side .list::-webkit-scrollbar{width:6px}
+.side .list::-webkit-scrollbar-thumb{background:#3A3247;border-radius:3px}
+.side button{
+  display:flex;align-items:center;gap:9px;width:100%;background:none;border:0;cursor:pointer;
+  color:#A79FB8;font-family:inherit;font-size:11.5px;padding:7px 10px;border-radius:9px;text-align:left;
+}
+.side button:hover{background:#2A2338;color:#fff}
+.side button.on{background:linear-gradient(90deg,rgba(240,86,63,.22),rgba(168,51,128,.16));color:#fff}
+.side button b{font-size:10px;font-weight:600;color:#7E7594;min-width:22px}
+.side button.on b{color:#FF9B7A}
+.side .reset{margin:10px;padding:10px;border-radius:10px;background:#2A2338;color:#CFC7DE;font-size:11.5px;border:0;cursor:pointer;font-family:inherit}
+
+/* ---------- stage ---------- */
+.stage{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.stage-inner{transform-origin:center center}
+.phone{
+  width:390px;height:844px;border-radius:44px;position:relative;overflow:hidden;
+  box-shadow:0 40px 90px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);
+  background:#FBF6F1;
+}
+.hintbar{
+  position:absolute;bottom:18px;left:0;right:0;text-align:center;font-size:11px;color:#7B7391;letter-spacing:.02em;
+}
+
+/* ---------- screen ---------- */
+.screen{position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg)}
+.screen.on{display:flex;animation:fade .26s ease}
+@keyframes fade{from{opacity:0;transform:scale(.994)}to{opacity:1;transform:none}}
+.body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+.scroll::-webkit-scrollbar{width:0}
+
+/* ---------- status bar ---------- */
+.sb{height:62px;flex:0 0 62px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 26px 12px;font-size:14px;font-weight:600;letter-spacing:.01em}
+.sb .icons{display:flex;align-items:center;gap:5px}
+.sb svg{display:block}
+.sb.bleed{padding-left:0;padding-right:0}
+.sb.dark{color:#10132B}
+.sb.light{color:#fff}
+
+/* ---------- shared ---------- */
+.pad{padding:0 20px}
+.pad26{padding:0 26px}
+.title{font-size:24px;font-weight:700;color:var(--ink);margin:0}
+.title-sm{font-size:17px;font-weight:700;color:var(--ink);margin:0}
+.subline{font-size:12px;color:var(--sub);margin:6px 0 0;line-height:1.6}
+.label{font-size:11.5px;font-weight:500;color:var(--label);margin:0 0 6px}
+.field{height:56px;background:#fff;border:1px solid var(--line);border-radius:16px;display:flex;align-items:center;padding:0 16px;font-size:14px;color:var(--ink)}
+.field.ph{color:#9A94A8}
+.field.err{border-color:#F05740}
+.btn{height:52px;border-radius:26px;background:var(--grad);color:#fff;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;border:0;width:100%;cursor:pointer;font-family:inherit;letter-spacing:.01em}
+.btn:active{transform:scale(.99)}
+.btn.ghost{background:#fff;color:var(--accent);border:1px solid #F5C6B6}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:5px 11px;border-radius:100px;font-size:11px;font-weight:500;background:var(--chip);color:var(--accent2);cursor:pointer;border:0;font-family:inherit}
+.chip.on{background:var(--accent);color:#fff}
+.card{background:#fff;border:1px solid var(--line2);border-radius:16px}
+.card-grad{border:1px solid transparent;background:#fff;border-radius:20px;position:relative}
+.card-grad::before{content:"";position:absolute;inset:-1px;border-radius:21px;padding:1px;background:linear-gradient(90deg,#FF7DB2,#FFA45C,#A97BFF);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.row{display:flex;align-items:center}
+.between{display:flex;align-items:center;justify-content:space-between}
+.gap6{gap:6px}.gap8{gap:8px}.gap10{gap:10px}.gap12{gap:12px}
+.grow{flex:1;min-width:0}
+.center{display:flex;align-items:center;justify-content:center}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.back{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink)}
+.nav{display:flex;align-items:center;gap:8px;padding:4px 18px 10px 16px}
+.nav .t{flex:1;font-size:24px;font-weight:700;color:var(--ink)}
+.nav .act{font-size:11px;font-weight:500;color:var(--muted)}
+.sec-t{font-size:13px;font-weight:700;color:var(--ink)}
+.hr{height:1px;background:var(--line);margin:2px 0}
+
+/* progress */
+.progress{display:flex;gap:6px}
+.progress i{flex:1;height:5px;border-radius:3px;background:#F1E6DF}
+.progress i.on{background:var(--accent3)}
+
+/* tab bar */
+.tabbar{flex:0 0 82px;display:flex;background:#fff;padding:12px 21px 21px;gap:0;box-shadow:0 -6px 20px rgba(140,46,122,.06)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:500;color:var(--muted);cursor:pointer}
+.tab.on{color:var(--accent2);font-weight:600}
+.tab svg{width:21px;height:21px}
+
+/* home gradient head */
+#S1,#S2,#S3,#S4{background:linear-gradient(180deg,#FC6B4A 0%,#F04A70 50%,#8C2E7A 100%)}
+.splash,.brand-screen{background:transparent}
+.home-top{background:linear-gradient(160deg,#FF7A59,#F04D6E 55%,#B83080);border-radius:0 0 28px 28px;padding:6px 20px 16px;flex:0 0 auto}
+.brandrow{display:flex;align-items:center;justify-content:space-between;padding:6px 0 14px}
+.brand{display:flex;align-items:center;gap:7px;color:#fff;font-size:20px;font-weight:700}
+.pill-loc{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.18);color:#fff;font-size:10.5px;font-weight:500;padding:6px 11px;border-radius:100px}
+.searchbar{height:44px;background:#fff;border-radius:24px;display:flex;align-items:center;gap:9px;padding:0 16px;color:#9A94A8;font-size:12.5px}
+
+/* misc */
+.dot{width:7px;height:7px;border-radius:50%;background:#F0563F}
+.badge{font-size:9.5px;font-weight:600;padding:4px 8px;border-radius:100px;background:#FFEFEF;color:#EC563E}
+.note{background:#FFF7F3;border-radius:14px;padding:11px 13px;font-size:10.5px;color:#8A6A5E;line-height:1.62}
+.note2{background:#F4F1F8;border-radius:14px;padding:11px 13px;font-size:10.5px;color:#6E6A80;line-height:1.62}
+.warn{background:#FFF8EC;border:1px solid #F6E3C0;border-radius:14px;padding:12px 13px}
+.warn .wt{font-size:11.5px;font-weight:700;color:#9A6A12;margin-bottom:5px}
+.warn .wc{font-size:10.5px;color:#8A6A2C;line-height:1.55}
+
+/* S1 S2 */
+.splash{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 30px 40px}
+.splash-img{width:100%;height:500px;border-radius:18px;background-size:cover;background-position:center;margin-bottom:16px}
+.splash-img.short{height:300px}
+.splash h2{font-size:18px;font-weight:700;color:#fff;text-align:center;margin:0 0 8px}
+.splash p{font-size:11.5px;color:rgba(255,255,255,.8);text-align:center;margin:0}
+
+/* S3 S4 */
+.brand-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 32px}
+.mark128{width:128px;height:128px;border-radius:38px;background-size:cover;background-position:center;position:relative;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.5);overflow:hidden}
+.mark128::after{content:"";position:absolute;inset:0;background:rgba(10,18,41,.42)}
+.mark128 svg{position:relative;z-index:1;width:76px;height:76px}
+.mark-s3{width:124px;height:124px;display:flex;align-items:center;justify-content:center}
+.mark-s3 svg{width:96px;height:96px;color:#fff}
+.brand-name{font-size:34px;font-weight:700;color:#fff;margin:22px 0 10px}
+.brand-name.big{font-size:40px;margin:26px 0 8px}
+.brand-tag{font-size:12px;color:rgba(255,255,255,.72);margin:0}
+.brand-tag2{font-size:15px;font-weight:500;color:#fff;margin:0}
+.brand-sub{font-size:12.5px;color:rgba(255,255,255,.78);margin:10px 0 0}
+.login-pill{margin-top:34px;padding:8px 18px;border-radius:100px;background:rgba(255,255,255,.18);color:#fff;font-size:10.5px;font-weight:500;cursor:pointer;border:0;font-family:inherit}
+.absorb{position:absolute;inset:0;cursor:pointer}
+
+/* S6 register */
+.checkbox{width:18px;height:18px;border-radius:5px;background:#fff;border:1px solid #D9CFC6;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 18px}
+.checkbox.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.divider{display:flex;align-items:center;gap:9px;color:#A79FB2;font-size:10.5px}
+.divider i{flex:1;height:1px;background:#E9DFD8}
+.social{display:flex;gap:10px}
+.social .s{flex:1;height:50px;background:#fff;border:1px solid #E9DFD8;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;font-weight:500;color:#4A4560;cursor:pointer}
+.social .s img{width:20px;height:20px;border-radius:6px;object-fit:cover}
+
+/* S9 */
+.career{display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border:1px solid var(--line2);border-radius:16px;margin-bottom:10px;cursor:pointer}
+.career .ic{width:38px;height:38px;border-radius:12px;background-size:cover;background-position:center;flex:0 0 38px}
+.career .nm{font-size:12.5px;font-weight:600;color:var(--ink2)}
+.career .ds{font-size:10.5px;color:#8A8494;margin-top:3px}
+.tick{width:20px;height:20px;border-radius:50%;border:1px solid #E8DED4;display:flex;align-items:center;justify-content:center;flex:0 0 20px;color:#fff}
+.tick.on{background:#F0694A;border-color:#F0694A}
+
+/* S11 */
+.adcard{margin:14px 20px 0;border-radius:20px;padding:16px;background:linear-gradient(120deg,#FB6A54,#C13E77);color:#fff;position:relative;overflow:hidden;min-height:126px;display:flex;flex-direction:column;justify-content:flex-end}
+.adcard .tag{position:absolute;top:14px;left:14px;font-size:9.5px;padding:3px 9px;border-radius:100px;background:rgba(255,255,255,.24)}
+.adcard .pg{position:absolute;top:16px;right:14px;font-size:10px;color:rgba(255,255,255,.75)}
+.adcard h3{font-size:19px;font-weight:700;margin:0 0 6px}
+.adcard p{font-size:11px;color:rgba(255,255,255,.82);margin:0}
+.quick{display:flex;justify-content:space-between;padding:18px 20px 4px}
+.quick .q{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:10.5px;font-weight:500;color:var(--label);cursor:pointer;width:66px}
+.quick .q i{width:46px;height:46px;border-radius:50%;background-size:cover;background-position:center;border:1px solid #F3CFC0;display:block}
+.dimo-card{margin:14px 20px 0;padding:14px;border-radius:20px;position:relative;background:#fff}
+.dimo-head{display:flex;align-items:center;gap:10px}
+.dimo-head img{width:54px;height:54px;border-radius:16px;object-fit:cover}
+.dimo-head .nm{font-size:14px;font-weight:700;color:var(--ink)}
+.dimo-head .st{font-size:10.5px;color:var(--muted);margin-top:3px}
+.dimo-card .cp{font-size:12.5px;font-weight:500;color:var(--label);line-height:1.5;margin:12px 0 12px}
+.btn-sm{height:44px;border-radius:22px;font-size:14px}
+
+/* job card */
+.jcard{margin:0 20px 12px;padding:14px;border-radius:18px;position:relative;background:#fff}
+.jcard .top{display:flex;gap:11px}
+.jcard .lg{width:44px;height:44px;border-radius:14px;background-size:cover;background-position:center;flex:0 0 44px}
+.jcard .jt{font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.35}
+.jcard .jc{font-size:11.5px;color:var(--sub);margin-top:4px}
+.jcard .jm{font-size:11.5px;color:var(--muted);margin-top:6px}
+.jcard .tags{display:flex;gap:6px;margin-top:9px}
+.jcard .tags span{font-size:9.5px;padding:3px 8px;border-radius:6px;background:#FDF0EA;color:#E0523A}
+.jcard .pay{font-size:12px;font-weight:600;color:var(--accent2);margin-top:10px}
+.jcard .why{font-size:11px;color:#6B5A52;line-height:1.55;margin-top:9px}
+.jcard .foot{display:flex;align-items:center;justify-content:space-between;margin-top:11px}
+.jcard .match{font-size:10.5px;color:var(--muted)}
+.jcard .more{font-size:12.5px;font-weight:600;color:var(--accent);cursor:pointer}
+.heart{position:absolute;top:14px;right:14px;color:#B9B3A8;cursor:pointer}
+
+/* S13 */
+.detail-top{background:linear-gradient(150deg,#FF7A59,#E8456B 60%,#B83080);border-radius:0 0 26px 26px;padding:0 20px 20px;color:#fff}
+.detail-top h2{font-size:20px;font-weight:700;margin:6px 0 6px;line-height:1.35}
+.detail-top .co{font-size:11.5px;color:rgba(255,255,255,.85)}
+.kv{background:#fff;border-radius:14px;padding:12px 14px;margin:12px 20px 0}
+.kv div{font-size:11.5px;color:#4A4560;padding:4px 0;line-height:1.6}
+.kv .pay{color:var(--accent2);font-weight:500}
+.bullet{font-size:11.5px;color:#4A4560;line-height:1.75;white-space:pre-line}
+.bottom-bar{flex:0 0 82px;background:#fff;padding:12px 20px 20px;box-shadow:0 -6px 20px rgba(140,46,122,.08)}
+
+/* S15 */
+.succ{flex:1;display:flex;flex-direction:column;align-items:center;padding:26px 24px 20px;overflow-y:auto}
+.succ-ic{width:76px;height:76px;border-radius:50%;background:#E6F6EF;display:flex;align-items:center;justify-content:center;color:#2E9E7E;margin-bottom:18px}
+.succ h2{font-size:21px;font-weight:700;margin:0 0 10px;color:var(--ink)}
+.list-card{width:100%;background:#fff;border-radius:18px;padding:14px;margin-top:16px;font-size:11.5px;color:#4A4560;line-height:1.75;white-space:pre-line}
+
+/* chat */
+.chat-head{display:flex;align-items:center;gap:10px;padding:2px 18px 11px 16px}
+.chat-head img{width:34px;height:34px;border-radius:10px;object-fit:cover}
+.chat-head .nm{font-size:13px;font-weight:700;color:var(--ink);line-height:1.2}
+.chat-head .st{font-size:9.5px;color:var(--muted);margin-top:2px}
+.chat-body{flex:1;min-height:0;overflow-y:auto;padding:0 18px 20px;display:flex;flex-direction:column;gap:12px}
+.bubble{max-width:302px;background:#fff;border:1px solid #F1E7DC;padding:13px;font-size:11.5px;color:#3C3550;line-height:1.72;border-radius:4px 18px 18px 18px}
+.bubble.me{align-self:flex-end;background:var(--grad);color:#fff;border:0;border-radius:18px 4px 18px 18px}
+.chat-input{flex:0 0 78px;background:#fff;display:flex;align-items:center;gap:9px;padding:12px 16px 22px;box-shadow:0 -6px 20px rgba(140,46,122,.08)}
+.chat-input .in{flex:1;height:40px;border-radius:20px;border:1px solid #EDE2DA;background:#fff;display:flex;align-items:center;padding:0 16px;font-size:12px;color:#9A94A8}
+.chat-input .rd{width:36px;height:36px;border-radius:18px;background:#F6EFE8;display:flex;align-items:center;justify-content:center;color:#A08C74}
+.chat-input .sd{width:36px;height:36px;border-radius:18px;background:#E8A87C;display:flex;align-items:center;justify-content:center;color:#fff}
+.quick-reply{display:flex;gap:7px;flex-wrap:wrap}
+.quick-reply span{font-size:10.5px;color:#6E6A80;background:#fff;border:1px solid #EFE3D9;padding:7px 11px;border-radius:100px}
+
+/* S17 tabs */
+.seg{display:flex;background:#F1EAE4;border-radius:100px;padding:4px;gap:2px}
+.seg div{flex:1;text-align:center;font-size:11.5px;padding:9px 0;border-radius:100px;color:#8A8496;cursor:pointer}
+.seg div.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 3px 8px rgba(140,64,77,.1)}
+.course{margin:0 20px 10px;padding:14px;border-radius:20px;background:#fff;display:flex;gap:12px;cursor:pointer;border:1px solid #F3E7DE}
+.course .cv{width:64px;height:64px;border-radius:14px;background-size:cover;background-position:center;flex:0 0 64px}
+.course .cn{font-size:13px;font-weight:700;color:var(--ink);line-height:1.4}
+.course .cm{font-size:10.5px;color:var(--muted);margin-top:5px}
+.pbar{height:5px;border-radius:3px;background:#F1E6DF;margin-top:9px;overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:3px;background:var(--grad)}
+.course .pf{font-size:10px;color:var(--muted);text-align:right;margin-top:5px}
+
+/* S19 */
+.mood{display:flex;gap:8px;flex-wrap:wrap}
+.mood span{font-size:11px;font-weight:500;color:#E0523A;background:#FFF0EA;padding:7px 13px;border-radius:100px;cursor:pointer}
+.tile{width:calc(50% - 5px);background:#fff;border:1px solid #F0E4DC;border-radius:16px;padding:13px 14px;cursor:pointer}
+.tile .tt{font-size:12px;font-weight:600;color:var(--ink)}
+.tile .td{font-size:10.5px;color:var(--muted);margin-top:4px}
+
+/* S21 posts */
+.post{margin:0 20px 12px;background:#fff;border-radius:18px;padding:14px}
+.post .ph{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.post .ph img{width:34px;height:34px;border-radius:50%;object-fit:cover}
+.post .ph .pn{font-size:12px;font-weight:600;color:var(--ink)}
+.post .ph .pt{font-size:10px;color:var(--muted);margin-top:2px}
+.post .pc{font-size:11.5px;color:#3C3550;line-height:1.72}
+.post .pics{display:flex;gap:6px;margin-top:10px}
+.post .pics i{flex:1;height:78px;border-radius:10px;background-size:cover;background-position:center;display:block}
+.post .acts{display:flex;gap:18px;margin-top:11px;font-size:10.5px;color:var(--muted)}
+
+/* S22 */
+.stat{flex:1;text-align:center}
+.stat .n{font-size:19px;font-weight:700;color:var(--ink)}
+.stat .l{font-size:10px;color:var(--muted);margin-top:3px}
+.appc{margin:0 20px 10px;background:#fff;border-radius:16px;padding:14px}
+.appc .ah{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.appc .at{font-size:12.5px;font-weight:700;color:var(--ink)}
+.appc .ac{font-size:10.5px;color:var(--muted);margin-top:4px}
+.appc .tl{font-size:10.5px;color:#6B6478;line-height:1.8;margin-top:9px;white-space:pre-line}
+.appc .rm{font-size:10.5px;color:#9A6A12;background:#FFF8EC;border-radius:8px;padding:7px 9px;margin-top:9px}
+
+/* S25 */
+.profile{margin:4px 20px 0;background:#fff;border-radius:20px;padding:16px}
+.av-me{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FFB1A0,#E0567E);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex:0 0 56px}
+.av-sm{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#FFB1A0,#E0567E);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:0 0 34px}
+.profile .nm{font-size:16px;font-weight:700;color:var(--ink)}
+.profile .sc{font-size:11px;color:var(--sub);margin-top:4px}
+.li{margin:0 20px 10px;background:#fff;border-radius:16px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.li .ic{width:38px;height:38px;border-radius:12px;background:#FDF0EA;display:flex;align-items:center;justify-content:center;color:#E0523A;flex:0 0 38px}
+.li .lt{font-size:12.5px;font-weight:600;color:var(--ink)}
+.li .ls{font-size:10.5px;color:var(--muted);margin-top:3px}
+.li .lv{font-size:10.5px;color:var(--muted)}
+
+/* S26 */
+.rep{margin:0 20px 12px;background:#fff;border-radius:16px;padding:15px}
+.rep .rt{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.rep .rc{font-size:11.5px;color:#4A4560;line-height:1.78}
+.rep .item{font-size:11.5px;color:#4A4560;line-height:1.78;padding:9px 0;border-top:1px dashed #F0E4DC}
+.rep .item:first-of-type{border-top:0;padding-top:0}
+
+/* S27 */
+.grp{font-size:11px;font-weight:600;color:#8A8496;padding:16px 22px 8px;letter-spacing:.02em}
+.opt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;font-size:11.5px;color:#4A4560;cursor:pointer}
+.opt.on{background:#FFF0EA;color:#E0523A;font-weight:600}
+.switch{width:40px;height:23px;border-radius:100px;background:#E6DED7;position:relative;flex:0 0 40px;cursor:pointer;transition:.2s}
+.switch i{position:absolute;top:2.5px;left:2.5px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s}
+.switch.on{background:var(--accent)}
+.switch.on i{left:19.5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <h1>Deepjob · 交互原型</h1>
+    <div class="sub">S1–S27 共 27 屏<br>点击界面按钮按流程前进，也可直接跳屏</div>
+    <div class="list" id="idx"></div>
+    <button class="reset" onclick="restart()">重新开始</button>
+  </aside>
+  <main class="stage">
+    <div class="stage-inner" id="stageInner">
+      <div class="phone" id="phone"></div>
+    </div>
+    <div class="hintbar">点击屏幕内的按钮继续 · 左上角返回可回上一屏</div>
+  </main>
+</div>
+
+<script>
+/* ---------------- icons ---------------- */
+const ICONS = {
+  home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="none"/>',
+  book:'<path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M8 7h7M8 11h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  pulse:'<path d="M3 12h4l2.5-6 4 12L16 12h5" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  chat:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v7A2.5 2.5 0 0 1 17.5 15H9l-4 4v-4H6.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+  user:'<circle cx="12" cy="8" r="3.6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M4.5 20c1.2-3.6 4-5.4 7.5-5.4S18.3 16.4 19.5 20" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+  search:'<circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+  bell:'<path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M10 18.5a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>',
+  back:'<path d="M14.5 5 8 12l6.5 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  down:'<path d="M6 9.5 12 15l6-5.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  globe:'<circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M3.5 12h17M12 3.5c2.2 2.4 3.3 5.3 3.3 8.5s-1.1 6.1-3.3 8.5c-2.2-2.4-3.3-5.3-3.3-8.5S9.8 5.9 12 3.5z" stroke="currentColor" stroke-width="1.4" fill="none"/>',
+  heart:'<path d="M12 20s-7.5-4.7-7.5-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7.5 2.6C19.5 15.3 12 20 12 20z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+  bookmark:'<path d="M6.5 4h11v16l-5.5-4-5.5 4z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+  comment:'<path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-5 4z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+  more:'<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>',
+  check:'<path d="M4 12.5 9.5 18 20 6.5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  plus:'<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+  arrow:'<path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  doc:'<path d="M6 3h8l4 4v14H6z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M9 11h6M9 15h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+  chart:'<path d="M4 20V4M4 20h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><rect x="8" y="12" width="3" height="5" fill="currentColor" opacity=".85"/><rect x="13" y="8" width="3" height="9" fill="currentColor" opacity=".85"/>',
+  settings:'<circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  shield:'<path d="M12 3l7 3v5.5c0 4.2-2.9 7.6-7 9.5-4.1-1.9-7-5.3-7-9.5V6z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+  send:'<path d="M4 12 20 5l-6 15-3-6z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+  smile:'<circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path d="M8.5 14.5a4 4 0 0 0 7 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
+  filter:'<path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+  shield2:'<path d="M12 3l7 3v5.5c0 4.2-2.9 7.6-7 9.5-4.1-1.9-7-5.3-7-9.5V6z" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+};
+function ic(n,s){s=s||20;return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'">'+(ICONS[n]||'')+'</svg>';}
+
+function sb(mode,extra){
+  return '<div class="sb '+(mode==='light'?'light':'dark')+' '+(extra||'')+'">'
+   +'<span>9:41</span>'
+   +'<span class="icons">'
+   +'<svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.6" y="5" width="3" height="6" rx="1"/><rect x="9.2" y="2.6" width="3" height="8.4" rx="1"/><rect x="13.8" y="0" width="3" height="11" rx="1"/></svg>'
+   +'<svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 10.4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/><path d="M3.2 5.4a6.9 6.9 0 0 1 9.6 0l-1.4 1.4a5 5 0 0 0-6.8 0z"/><path d="M.8 2.9a10.3 10.3 0 0 1 14.4 0l-1.4 1.4a8.3 8.3 0 0 0-11.6 0z"/></svg>'
+   +'<svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.6" y="0.6" width="21" height="10.8" rx="3" stroke="currentColor" stroke-opacity=".5"/><rect x="2.2" y="2.2" width="16" height="7.6" rx="1.8" fill="currentColor"/><path d="M23 4.2v3.6c1.2-.4 1.8-1 1.8-1.8s-.6-1.4-1.8-1.8z" fill="currentColor" fill-opacity=".5"/></svg>'
+   +'</span></div>';
+}
+function tabbar(active){
+  const items=[['home','首页'],['book','课堂'],['pulse','动态'],['chat','讯息'],['user','我的']];
+  return '<div class="tabbar">'+items.map(function(it){
+    const on = it[1]===active;
+    return '<div class="tab '+(on?'on':'')+'" data-go="'+({ '首页':'S11','课堂':'S17','动态':'S21','讯息':'S24','我的':'S25' }[it[1]])+'">'+ic(it[0],21)+'<span>'+it[1]+'</span></div>';
+  }).join('')+'</div>';
+}
+function img(n){return 'assets/images/'+n;}
+
+/* ---------------- screens ---------------- */
+const S = {};
+
+/* S1 */
+S.S1 = sb('light')+`
+<div class="splash" data-go="S2">
+  <div class="splash-img" style="background-image:url('${img('2_1163-20261108_122954556.png')}')"></div>
+  <h2>AI 正在读懂你的能力</h2>
+  <p>学历、技能、经历，都在这里被看见。</p>
+</div>`;
+
+/* S2 */
+S.S2 = sb('light')+`
+<div class="splash" data-go="S3">
+  <div class="splash-img short" style="background-image:url('${img('2_1164-20261108_122955161.png')}')"></div>
+  <h2>然后，机会同时涌现</h2>
+  <p>但要知道哪一个，才真正适合你。</p>
+</div>`;
+
+/* S3 */
+S.S3 = sb('light')+`
+<div class="brand-screen" data-go="S4">
+  <div class="mark-s3"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3">
+    <path d="M50 14a36 36 0 1 0 0 72 36 36 0 0 0 0-72z" stroke-dasharray="6 9" opacity=".55"/>
+    <path d="M50 26 74 62H26z" stroke-linejoin="round"/>
+    <circle cx="50" cy="30" r="5" fill="currentColor" stroke="none"/>
+    <circle cx="30" cy="64" r="5" fill="currentColor" stroke="none"/>
+    <circle cx="70" cy="64" r="5" fill="currentColor" stroke="none"/>
+    <circle cx="50" cy="67" r="4" fill="#FE6A49" stroke="none"/>
+  </svg></div>
+  <div class="brand-name">Deepjob</div>
+  <p class="brand-tag">让能力被看见，让职涯有方向。</p>
+  <div class="chips" style="justify-content:center;margin-top:26px">
+    <span class="chip" style="background:rgba(255,255,255,.26);color:#fff">AI 职位配对</span>
+    <span class="chip" style="background:rgba(255,255,255,.26);color:#fff">能力差距分析</span>
+    <span class="chip" style="background:rgba(255,255,255,.26);color:#fff">求职情绪支持</span>
+  </div>
+</div>`;
+
+/* S4 */
+S.S4 = sb('light')+`
+<div class="brand-screen">
+  <div class="mark128" style="background-image:url('${img('2_288-20261108_122955587.png')}')">
+    <svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="3">
+      <path d="M50 26 74 62H26z" stroke-linejoin="round"/>
+      <circle cx="50" cy="30" r="4.4" fill="#fff" stroke="none"/>
+      <circle cx="30" cy="64" r="4.4" fill="#fff" stroke="none"/>
+      <circle cx="70" cy="64" r="4.4" fill="#fff" stroke="none"/>
+    </svg>
+  </div>
+  <div class="brand-name big">Deepjob</div>
+  <p class="brand-tag2">找到适合你的第一份工作</p>
+  <p class="brand-sub">让能力被看见，让职涯有方向。</p>
+  <button class="login-pill" data-go="S5">Login</button>
+</div>`;
+
+/* S5 login */
+S.S5 = sb('dark')+`
+<div class="scroll pad26" style="padding-top:6px">
+  <div class="row" style="justify-content:space-between;margin-bottom:18px">
+    <div class="row gap6" style="border:1px solid var(--line);background:#fff;border-radius:100px;padding:7px 11px;font-size:11px;color:#4A4560">
+      <span style="color:#6E6A80">${ic('globe',13)}</span><span>简体中文</span><span style="color:#8A8496">${ic('down',9)}</span>
+    </div>
+  </div>
+  <h1 class="title">欢迎回来</h1>
+  <p class="subline" style="margin-bottom:20px">使用电子邮件登录 Deepjob，继续你的求职旅程。</p>
+  <p class="label">电子邮件</p>
+  <div class="field" style="margin-bottom:14px">hiuyan.chan@example.com</div>
+  <p class="label">密码</p>
+  <div class="field" style="margin-bottom:10px">••••••••••</div>
+  <p style="font-size:12px;font-weight:500;color:var(--accent);text-align:right;margin:0 0 18px">忘记密码？</p>
+  <button class="btn" data-go="S11">登录</button>
+  <div class="note" style="margin-top:16px">示范登录：此原型未连接真实身份验证服务，不会实际寄送验证信，密码亦不以明文储存。</div>
+  <div class="divider" style="margin:20px 0 14px"><i></i><span>或使用以下方式登录</span><i></i></div>
+  <div class="social">
+    <div class="s"><img src="${img('2_1175-20261108_122955888.png')}">微信</div>
+    <div class="s"><img src="${img('2_1178-20261108_122956172.png')}">WhatsApp</div>
+  </div>
+  <div class="row gap6" style="justify-content:center;margin:22px 0 10px;font-size:12px;color:#8A8496">
+    尚未有帐户？<span style="color:var(--accent);font-weight:600;cursor:pointer" data-go="S6">立即注册</span>
+  </div>
+</div>`;
+
+/* S6 register */
+S.S6 = sb('dark')+`
+<div class="scroll" style="padding:6px 26px 18px">
+  <div class="row" style="margin-bottom:16px">
+    <div class="row gap6" style="border:1px solid var(--line);background:#fff;border-radius:100px;padding:7px 11px;font-size:11px;color:#4A4560">
+      <span style="color:#6E6A80">${ic('globe',13)}</span><span>简体中文</span><span style="color:#8A8496">${ic('down',9)}</span>
+    </div>
+  </div>
+  <h1 class="title" style="line-height:1.34">建立帐户</h1>
+  <p class="subline">使用电子邮件注册 Deepjob，开启你的求职旅程。</p>
+  <div style="margin-top:18px">
+    <p class="label">姓名</p>
+    <div class="field ph" style="height:54px;margin-bottom:13px">请输入真实姓名</div>
+    <p class="label">电子邮件</p>
+    <div class="field ph" style="height:54px;margin-bottom:13px">name@example.com</div>
+    <p class="label">密码</p>
+    <div class="field" id="regPw" style="height:54px;margin-bottom:13px;color:#10132B">请设置 8–20 位密码</div>
+    <p class="label">确认密码</p>
+    <div class="field ph" style="height:54px">••••••••</div>
+    <p style="font-size:11px;color:var(--accent);margin:8px 0 0">两次输入的密码不一致，请重新确认。</p>
+  </div>
+  <div class="row gap8" style="margin:16px 0 0;align-items:flex-start">
+    <div class="checkbox" id="cbTerms">${ic('check',11)}</div>
+    <div style="font-size:11px;color:#7A7488;line-height:1.6">我已阅读并同意<span style="color:var(--accent);font-weight:500">《服务条款》与《隐私政策》</span></div>
+  </div>
+  <button class="btn" id="btnCreate" style="margin-top:18px" data-go="S7">创建帐户</button>
+  <div class="note" style="margin-top:16px">示范注册：此原型不寄送验证信，密码亦不以明文储存。</div>
+  <div class="divider" style="margin:18px 0 13px"><i></i><span>或使用以下方式注册</span><i></i></div>
+  <div class="social">
+    <div class="s">微信</div><div class="s">WhatsApp</div>
+  </div>
+  <div class="row gap6" style="justify-content:center;margin:20px 0 10px;font-size:12px;color:#8A8496">
+    已有帐户？<span style="color:var(--accent);font-weight:600;cursor:pointer" data-go="S5">立即登入</span>
+  </div>
+</div>`;
+
+/* S7 education */
+S.S7 = sb('dark')+`
+<div class="scroll" style="padding:6px 26px 26px">
+  <div class="progress" style="margin-bottom:18px"><i class="on"></i><i></i><i></i></div>
+  <h1 class="title">你的学历与专业</h1>
+  <p class="subline" style="margin-bottom:18px">用于比对职位的学历门槛，不会公开展示。</p>
+  <p class="label">学校名称</p>
+  <div class="field" style="margin-bottom:14px">深圳大学</div>
+  <p class="label">最高学历</p>
+  <div class="chips" style="margin-bottom:14px">
+    <span class="chip on">学士学位</span><span class="chip">硕士学位</span><span class="chip">大专学历</span>
+  </div>
+  <p class="label">主修专业</p>
+  <div class="field" style="margin-bottom:14px">计算机专业</div>
+  <p class="label">预计毕业时间</p>
+  <div class="field" style="margin-bottom:20px">2026 年 6 月</div>
+  <button class="btn" data-go="S8">下一步：技能与经验</button>
+  <p style="font-size:11.5px;color:#8A8496;text-align:center;margin:16px 0 0;cursor:pointer" data-go="S8">跳过，稍后可在「我的」补充</p>
+</div>`;
+
+/* S8 skills */
+S.S8 = sb('dark')+`
+<div class="scroll" style="padding:6px 26px 26px">
+  <div class="progress" style="margin-bottom:18px"><i class="on"></i><i class="on"></i><i></i></div>
+  <h1 class="title">你的技能与经验</h1>
+  <p class="subline" style="margin-bottom:18px">选出你已具备的技能，用作能力差距分析的基础。</p>
+  <p class="label">专业技能（可多选）</p>
+  <div class="chips" style="margin-bottom:16px" id="skillChips">
+    ${['Python','SQL','Excel 枢纽分析','Tableau','A／B 测试','简报表达','HTML','CSS','JavaScript','Figma','React','Vue'].map(function(s,i){
+      return '<span class="chip '+(i<3||i>5?'on':'')+'">'+s+'</span>';}).join('')}
+  </div>
+  <p class="label">实习／工作经验（选填）</p>
+  <div class="card" style="padding:13px;margin-bottom:8px">
+    <div style="font-size:12.5px;font-weight:600;color:var(--ink)">深圳腾讯 · 程序员实习</div>
+    <div style="font-size:11px;color:#8A8496;margin-top:4px;line-height:1.55">2025.06 – 2025.08 · 参与小程序功能开发与联调</div>
+  </div>
+  <div class="card" style="padding:13px;margin-bottom:8px">
+    <div style="font-size:12.5px;font-weight:600;color:var(--ink)">华为 · 计算机数据分析实习</div>
+    <div style="font-size:11px;color:#8A8496;margin-top:4px;line-height:1.55">2025.06 – 2025.08 · 参与数据看板搭建与指标口径整理</div>
+  </div>
+  <div class="card" style="padding:13px;margin-bottom:18px">
+    <div style="font-size:12.5px;font-weight:600;color:var(--ink)">百度 · 计算机实习</div>
+    <div style="font-size:11px;color:#8A8496;margin-top:4px;line-height:1.55">2026.01 – 2026.02 · 参与业务数据整理与报表自动化</div>
+  </div>
+  <button class="btn" data-go="S9">下一步：求职意愿</button>
+</div>`;
+
+/* S9 career */
+const careerList = [
+  ['13_17-20261108_123005082.png','资讯科技','软件工程 · 数据分析 · 人工智能',true],
+  ['13_27-20261108_123005337.png','科技金融','投资分析 · 风险管理 · 金融科技',false],
+  ['13_36-20261108_123005764.png','电子商务','电商运营 · 跨境贸易 · 供应链',true],
+  ['13_47-20261108_123006008.png','政府机构','公共行政 · 政策研究 · 公务员',false],
+  ['13_55-20261108_123006262.png','教育','教师 · 教育科技 · 课程设计',false],
+  ['13_64-20261108_123006570.png','工程','机械工程 · 土木建筑 · 智能制造',false],
+  ['13_72-20261108_123006819.png','设计','UI/UX · 平面视觉 · 产品设计',false]
+];
+S.S9 = sb('dark')+`
+<div class="scroll" style="padding:6px 26px 26px">
+  <div class="progress" style="margin-bottom:18px"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <h1 class="title">你的求职意愿</h1>
+  <p class="subline" style="margin-bottom:16px">选择感兴趣的职业方向，可上下滑动浏览并多选。</p>
+  <div id="careerList">
+  ${careerList.map(function(c){
+    return '<div class="career" data-multi="1"><div class="ic" style="background-image:url(\''+img(c[0])+'\')"></div>'
+     +'<div class="grow"><div class="nm">'+c[1]+'</div><div class="ds">'+c[2]+'</div></div>'
+     +'<div class="tick '+(c[3]?'on':'')+'">'+ic('check',11)+'</div></div>';
+  }).join('')}
+  </div>
+  <div class="row gap6" style="justify-content:center;color:#B9B3A8;font-size:10.5px;margin:2px 0 14px">
+    <span style="transform:rotate(-90deg);display:inline-flex">${ic('down',14)}</span>上下滑动浏览更多职业方向
+  </div>
+  <button class="btn" data-go="S10">完成设置</button>
+</div>`;
+
+/* S10 preferences */
+S.S10 = sb('dark')+`
+<div class="scroll" style="padding:6px 26px 26px">
+  <div class="progress" style="margin-bottom:18px"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+  <h1 class="title">你的求职意愿</h1>
+  <p class="subline" style="margin-bottom:18px">最后一步。这些偏好会直接影响推荐排序，随时可修改。</p>
+  <p class="label">期望职能</p>
+  <div class="chips" style="margin-bottom:16px">
+    <span class="chip on">数据分析</span><span class="chip on">商业分析</span><span class="chip">市场营销</span>
+  </div>
+  <p class="label">期望工作地区</p>
+  <div class="field" style="margin-bottom:16px">深圳（可接受跨区）</div>
+  <p class="label">期望薪酬与工作模式</p>
+  <div class="chips" style="margin-bottom:22px">
+    <span class="chip on">HK$18K 以上</span><span class="chip">混合办公</span>
+  </div>
+  <button class="btn" data-go="S11">完成，查看推荐职位</button>
+  <p class="subline" style="font-size:10.5px;color:#A79FB2;margin-top:14px;line-height:1.62">你的学历、技能与意愿只会用于职位配对与报告，预设不对企业公开；敏感资料不会纳入配对分数。</p>
+</div>`;
+
+/* S11 home */
+S.S11 = `
+<div class="home-top">
+  ${sb('light','bleed')}
+  <div class="brandrow">
+    <div class="brand">${ic('home',22)}Deepjob</div>
+    <div class="row gap8">
+      <div class="pill-loc">深圳 ${ic('down',10)}</div>
+      <span style="color:#fff;opacity:.9">${ic('bell',19)}</span>
+    </div>
+  </div>
+  <div class="searchbar" data-go="S12">
+    <span>${ic('search',16)}</span><span>搜寻职位、公司或技能</span>
+  </div>
+</div>
+<div class="scroll">
+  <div class="adcard">
+    <span class="tag">广告</span><span class="pg">1／3</span>
+    <h3>2026 校园招聘开始了</h3>
+    <p>36 间企业 · 即日起接受报名，含毕业生培训计划</p>
+  </div>
+  <div class="quick">
+    <div class="q"><i style="background-image:url('${img('2_454-20261108_123012299.png')}')"></i>AI 配对</div>
+    <div class="q" data-go="S26"><i style="background-image:url('${img('2_459-20261108_123012775.png')}')"></i>职涯报告</div>
+    <div class="q" data-go="S17"><i style="background-image:url('${img('2_464-20261108_123013264.png')}')"></i>技能差距</div>
+    <div class="q" data-go="S18"><i style="background-image:url('${img('2_470-20261108_123013629.png')}')"></i>防骗指南</div>
+  </div>
+  <div class="dimo-card card-grad">
+    <div class="dimo-head">
+      <img src="${img('2_476-20261108_122956455.png')}">
+      <div><div class="nm">DIMOO</div><div class="st">智能求职助手 · 陪你整理方向</div></div>
+    </div>
+    <p class="cp">不知道适合什么工作？让 DIMOO 陪你整理方向。</p>
+    <button class="btn btn-sm" data-go="S16">开始职涯对话</button>
+  </div>
+  <div class="between" style="padding:18px 20px 12px">
+    <span class="title-sm">为你推荐</span><span style="font-size:11.5px;color:#8A8496">查看全部</span>
+  </div>
+  <div class="jcard card-grad">
+    <span class="heart">${ic('heart',18)}</span>
+    <div class="top">
+      <div class="lg" style="background-image:url('${img('2_492-2_186-20261108_123026578.png')}')"></div>
+      <div class="grow">
+        <div class="jt">数据分析师（应届毕业生）</div>
+        <div class="jc">星轨数据有限公司 · 深圳</div>
+      </div>
+    </div>
+    <div class="tags"><span>数据分析</span><span>Python</span><span>SQL</span></div>
+    <div class="pay">HK$18,000–24,000／月</div>
+    <div class="jm">南山区 · 全职 · 学士</div>
+    <div class="why">推荐理由：你的 Python、SQL 与统计课程符合 3 项核心要求。</div>
+    <div class="foot"><span class="match">配对参考 88%</span><span class="more" data-go="S13">查看详情</span></div>
+  </div>
+  <div style="height:10px"></div>
+</div>
+${tabbar('首页')}`;
+
+/* S12 search results */
+S.S12 = sb('dark')+`
+<div class="nav" style="padding-top:2px">
+  <span class="back" data-back="S11">${ic('back',22)}</span>
+  <div class="grow" style="background:#fff;border:1px solid var(--line);border-radius:14px;height:38px;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:14px;color:var(--ink)">
+    <span style="color:#9A94A8">${ic('search',15)}</span>数据分析
+  </div>
+  <span style="color:#8A8496">${ic('filter',20)}</span>
+</div>
+<div class="scroll">
+  <div class="between" style="padding:2px 20px 10px">
+    <span style="font-size:11.5px;font-weight:500;color:#8A8496">共 42 个职位 · 依配对参考度排序</span>
+  </div>
+  <div class="chips" style="padding:0 20px 14px">
+    <span class="chip on">深圳 ×</span><span class="chip on">数据分析 ×</span><span class="chip on">15K 以上 ×</span>
+    <span class="chip" style="background:#F3EFFB;color:#6B57A8">更多筛选</span>
+  </div>
+  ${[
+    ['2_509-2_186-20261108_123027518.png','商业分析师（毕业生计划）','蓝鲸金融科技 · 福田',['数据分析','Python','SQL'],'¥8,000–10,000／月','福田 · 全职 · 学士','推荐理由：你的商业分析主修与 Excel 技能高度吻合。','84%'],
+    ['2_510-2_186-20261108_123028031.png','数据运营实习生（可转正）','木棉生活科技 · 保安',['数据分析','Python','SQL'],'薪酬未提供','保安 · 实习 · 大专学历','推荐理由：实习经历与 SQL 能力符合入门要求，可累积作品集。','79%'],
+    ['55_2-2_186-20261108_123028444.png','数据分析师','星轨数据有限公司 · 深圳',['数据分析','Python','SQL'],'¥18,000–24,000／月','南山 · 全职 · 本科','推荐理由：你的 Python、SQL 与统计课程符合 3 项核心要求。','88%'],
+    ['73_26-2_186-20261108_123036706.png','UI/UX 设计师','蓝湾数字设计 · 福田',['Figma','交互设计','UI'],'¥10,000–16,000／月','福田 · 全职 · 本科','推荐理由：你的视觉与交互作品完整，符合初级设计师要求。','76%']
+  ].map(function(j){
+    return '<div class="jcard card-grad"><span class="heart">'+ic('heart',18)+'</span>'
+     +'<div class="top"><div class="lg" style="background-image:url(\''+img(j[0])+'\')"></div>'
+     +'<div class="grow"><div class="jt">'+j[1]+'</div><div class="jc">'+j[2]+'</div></div></div>'
+     +'<div class="tags">'+j[3].map(function(t){return '<span>'+t+'</span>';}).join('')+'</div>'
+     +'<div class="pay">'+j[4]+'</div><div class="jm">'+j[5]+'</div>'
+     +'<div class="why">'+j[6]+'</div>'
+     +'<div class="foot"><span class="match">配对参考 '+j[7]+'</span><span class="more" data-go="S13">查看详情</span></div></div>';
+  }).join('')}
+  <div style="height:14px"></div>
+</div>`;
+
+/* S13 job detail */
+S.S13 = `
+<div class="detail-top">
+  ${sb('light','bleed')}
+  <div class="row between" style="padding:2px 0 4px">
+    <span class="back" data-back="S12" style="color:#fff">${ic('back',22)}</span>
+    <span style="color:#fff;opacity:.9">${ic('bookmark',20)}</span>
+  </div>
+  <h2>数据分析师（应届毕业生）</h2>
+  <div class="co">星轨数据有限公司 · 深圳 · 全职</div>
+</div>
+<div class="scroll">
+  <div class="kv">
+    <div class="pay">薪酬　¥18,000–24,000／月（含医疗保险）</div>
+    <div>地点　南山 · 混合办公（每周 2 天进办公室）</div>
+    <div>截止　2026 年 3 月 31 日 · 尚余 18 天</div>
+  </div>
+  <div style="padding:16px 20px 0">
+    <div class="sec-t" style="margin-bottom:8px">工作内容</div>
+    <div class="bullet">• 整理与清洗业务数据，维护每周营运报表
+• 以 SQL 与 Python 支持部门的临时分析需求
+• 协助建立仪表板，向非技术同事解释数据结果
+• 参与每月业务检讨会议并整理洞察</div>
+    <div class="sec-t" style="margin:16px 0 8px">公司介绍</div>
+    <div class="bullet">星轨数据成立于 2019 年，为零售与物流企业提供数据平台服务，团队约 80 人，连续三年获选为本地最佳中小企雇主之一。（示范资料）</div>
+  </div>
+  <div class="card" style="margin:16px 20px 0;padding:14px;border-radius:16px">
+    <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:9px">已符合能力（3／5 项核心要求）</div>
+    <div class="chips" style="margin-bottom:14px">
+      <span class="chip" style="background:#E9F6F1;color:#2E9E7E">Python</span>
+      <span class="chip" style="background:#E9F6F1;color:#2E9E7E">SQL</span>
+      <span class="chip" style="background:#E9F6F1;color:#2E9E7E">统计分析</span>
+      <span class="chip" style="background:#FFF0EA;color:#E0523A">html</span>
+      <span class="chip" style="background:#FFF0EA;color:#E0523A">css</span>
+      <span class="chip" style="background:#FFF0EA;color:#E0523A">javascript</span>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:9px">待提升能力（2 项）</div>
+    <div class="chips">
+      <span class="chip" style="background:#F1EFF5;color:#6E6A80">Tableau 仪表板</span>
+      <span class="chip" style="background:#F1EFF5;color:#6E6A80">A／B 测试设计</span>
+    </div>
+  </div>
+  <div class="between" style="padding:18px 20px 10px">
+    <span class="title-sm">推荐学习课程</span><span style="font-size:11.5px;color:#8A8496">共 3 门</span>
+  </div>
+  <div class="course" data-go="S18">
+    <div class="cv" style="background-image:url('${img('2_682-2_210-20261108_123014345.png')}')"></div>
+    <div class="grow">
+      <div class="cn">数据仪表板入门：Tableau 实作</div>
+      <div class="cm">针对你的差距 · 60 分钟 · 入门 · 免费</div>
+      <div class="pf">尚未开始</div>
+    </div>
+  </div>
+  <div style="padding:6px 20px 16px;font-size:10.5px;color:#8A8496;line-height:1.6">资料来源：星轨数据官方招聘页 · 最后更新 2026-02-20。示范内容，非真实职位。</div>
+  <div class="warn" style="margin:0 20px 20px">
+    <div class="wt">求职防骗提示</div>
+    <div class="wc">面试前留意：要求预缴费用、保证录取、索取银行密码或请你代收款项，都是常见风险。风险提示仅供参考，无法百分之百识别骗局。</div>
+  </div>
+</div>
+<div class="bottom-bar"><button class="btn" data-go="S15">提交简历</button></div>`;
+
+/* S14 apply confirm */
+S.S14 = sb('dark')+`
+<div class="nav"><span class="back" data-back="S13">${ic('back',22)}</span><span class="t" style="font-size:20px">申请资料确认</span></div>
+<div class="scroll" style="padding:0 20px 20px">
+  <p class="subline" style="margin:0 0 14px">步骤 1／3 · 提交 CV、证书、作品集</p>
+  <div class="card" style="padding:14px;margin-bottom:10px;border-color:#F5C6B6">
+    <div class="row between">
+      <span style="font-size:12.5px;font-weight:600;color:var(--ink)">CV_陈晓恩_数据分析_2026.pdf</span>
+      <span class="tick on" style="width:18px;height:18px;flex:0 0 18px">${ic('check',10)}</span>
+    </div>
+    <div style="font-size:10.5px;color:#8A8496;margin-top:5px">更新于 2 月 12 日 · 1 页 · 已针对数据职位调整</div>
+  </div>
+  <div class="card" style="padding:14px;margin-bottom:12px">
+    <div style="font-size:12.5px;font-weight:600;color:var(--ink)">CV_陈晓恩_通用版.pdf</div>
+    <div style="font-size:10.5px;color:#8A8496;margin-top:5px">更新于 1 月 28 日 · 1 页 · 未针对此职位调整</div>
+  </div>
+  <div style="border:1px dashed #E3D5CB;border-radius:14px;padding:13px;text-align:center;font-size:11.5px;color:#8A6A5E;margin-bottom:18px">上传新的 CV（PDF，10MB 以内）</div>
+  <div class="sec-t" style="margin-bottom:8px">证书（可选）</div>
+  <div style="border:1px dashed #E3D5CB;border-radius:14px;padding:13px;text-align:center;font-size:11.5px;color:#8A6A5E;margin-bottom:16px">上传证书（PDF／JPG，10MB 以内）</div>
+  <div class="sec-t" style="margin-bottom:8px">作品集（可选）</div>
+  <div style="border:1px dashed #E3D5CB;border-radius:14px;padding:13px;text-align:center;font-size:11.5px;color:#8A6A5E;margin-bottom:10px">上传作品集（PDF 或链接，20MB 以内）</div>
+  <div class="subline" style="font-size:10.5px;margin-bottom:18px">证书与作品集为选填，可稍后在「我的档案」补交。</div>
+  <div class="card" style="padding:14px;margin-bottom:14px">
+    <div class="sec-t" style="margin-bottom:10px">预览：将提交的资料</div>
+    <div style="font-size:11.5px;color:#4A4560;line-height:1.9">姓名　陈晓恩<br>申请职位　数据分析师（应届毕业生）<br>联络　hiuyan.chan@example.com（示范资料）</div>
+  </div>
+  <div class="row gap8" style="align-items:flex-start;margin-bottom:10px">
+    <div class="checkbox on">${ic('check',11)}</div>
+    <div style="font-size:11px;color:#7A7488;line-height:1.6">我已核对资料，并同意把上述内容提交予星轨数据有限公司</div>
+  </div>
+  <div class="subline" style="font-size:10.5px;margin-bottom:16px">未经你按下确认，Deepjob 不会自动向企业提交任何资料。</div>
+  <button class="btn" data-go="S15">确认并提交</button>
+</div>`;
+
+/* S15 success */
+S.S15 = sb('dark')+`
+<div class="succ">
+  <div class="succ-ic">${ic('check',34)}</div>
+  <h2>已提交（模拟）</h2>
+  <span class="badge">模拟申请，未向企业发送</span>
+  <p class="subline" style="text-align:center;margin-top:14px">这是示范流程，资料没有离开 Deepjob。正式版本会在取得你的确认后才提交予企业。</p>
+  <div class="list-card">
+    <div class="sec-t" style="margin-bottom:8px">接下来会发生什么</div>
+    1. 你会在「申请状态」看到这笔记录（使用者手动建立）
+2. 企业回复后，状态需你手动更新
+3. 一周后 DIMOO 会提醒你跟进
+  </div>
+  <button class="btn" style="margin-top:18px" data-go="S22">查看申请状态</button>
+  <button class="btn ghost" style="margin-top:10px" data-go="S11">返回首页</button>
+  <p class="subline" style="font-size:10.5px;text-align:center;margin-top:16px">想知道更多？可以在「就业课堂」重看面试准备课程。</p>
+</div>`;
+
+/* S16 DIMOO chat */
+S.S16 = sb('dark')+`
+<div class="chat-head">
+  <span class="back" data-back="S11">${ic('back',22)}</span>
+  <img src="${img('2_625-20261108_122956733.png')}">
+  <div class="grow"><div class="nm">DIMOO</div><div class="st">职涯对话 · 示范对话内容</div></div>
+  <span style="color:#8A8496">${ic('more',18)}</span>
+</div>
+<div class="chat-body">
+  <div class="note" style="margin:0">AI 建议仅供参考，招聘条件请以企业官方信息为准。</div>
+  <div class="bubble">你好，我是 DIMOO。看到你主修计算机专业、在市场部实习过。你比较想做数据方向，还是市场方向？</div>
+  <div class="bubble me">我想做数据分析，但不确定自己的能力够不够。</div>
+  <div class="bubble">根据你在档案填写的资料：Python、SQL、统计分析都已具备，这已符合大部分初阶数据职位的要求。目前主要差距在仪表板工具与实验设计。</div>
+  <div class="bubble" style="max-width:312px">
+    <div style="font-weight:700;color:#10132B;margin-bottom:6px">能力差距清单</div>
+    <div style="color:#4A4560;white-space:pre-line">已具备：Python、SQL、统计分析
+待补强：Tableau 仪表板（优先）、A／B 测试设计
+建议下一步：先完成 1 门仪表板课程，再把实习报告改写成作品集。</div>
+  </div>
+  <div class="quick-reply">
+    <span data-go="S18">我的 CV 可以怎样改善？</span>
+    <span>帮我准备第一次面试</span>
+    <span>这份招聘可疑吗？</span>
+  </div>
+</div>
+<div class="chat-input">
+  <div class="rd">${ic('smile',18)}</div>
+  <div class="in">输入你的问题…</div>
+  <div class="sd">${ic('send',16)}</div>
+</div>`;
+
+/* S17 classroom */
+S.S17 = sb('dark')+`
+<div class="scroll" style="padding:6px 0 10px">
+  <div style="padding:0 20px">
+    <h1 class="title">就业课堂</h1>
+    <p class="subline" style="margin-bottom:14px">补齐能力差距，也照顾求职路上的情绪。</p>
+    <div class="card-grad" style="padding:13px;margin-bottom:14px">
+      <div class="row gap10">
+        <img src="${img('2_727-20261108_123037575.png')}" style="width:42px;height:42px;border-radius:10px;object-fit:cover">
+        <div class="grow">
+          <div style="font-size:14px;font-weight:700;color:var(--ink)">奶糯小羊</div>
+          <div style="font-size:10.5px;color:#7A7598;margin-top:2px">就业心理咨询助手 · 在线</div>
+        </div>
+        <span class="badge">1 对 1</span>
+      </div>
+      <p style="font-size:11.5px;color:#4A4560;line-height:1.62;margin:10px 0 9px">面试紧张、被拒失落、offer 难选，都可以先说给我听。</p>
+      <button class="btn" style="height:36px;font-size:12.5px" data-go="S19">陪我聊一聊</button>
+    </div>
+    <div class="seg" style="margin-bottom:14px">
+      <div class="on">技能与求职课程</div><div data-go="S19">情绪充电站</div>
+    </div>
+    <div class="chips" style="margin-bottom:16px">
+      <span class="chip on">依我的差距推荐</span><span class="chip">CV 与求职信</span><span class="chip">面试技巧</span><span class="chip">企业笔试</span><span class="chip">求职防骗</span>
+    </div>
+    <div class="between" style="margin-bottom:10px">
+      <span class="title-sm">为你推荐的课程</span><span style="font-size:11.5px;color:#8A8496">共 6 门</span>
+    </div>
+  </div>
+  ${[
+    ['2_682-2_210-20261108_123014345.png','数据仪表板入门：Tableau 实作','针对你的差距 · 60 分钟 · 入门 · 免费','尚未开始',0,'S18'],
+    ['2_683-2_210-20261108_123014702.png','面试技巧：第一次面试不紧张','适合应届毕业生 · 40 分钟 · 入门 · 免费','已完成 20%',20,'S18'],
+    ['2_684-2_210-20261108_123025423.png','CV 写作入门：从空白到一份好简历','最多人修读 · 45 分钟 · 入门 · 免费','已完成 60%',60,'S18']
+  ].map(function(c){
+    return '<div class="course" data-go="'+c[5]+'"><div class="cv" style="background-image:url(\''+img(c[0])+'\')"></div>'
+     +'<div class="grow"><div class="cn">'+c[1]+'</div><div class="cm">'+c[2]+'</div>'
+     +'<div class="pbar"><i style="width:'+c[4]+'%"></i></div><div class="pf">'+c[3]+'</div></div></div>';
+  }).join('')}
+</div>
+${tabbar('课堂')}`;
+
+/* S18 course detail */
+S.S18 = sb('dark')+`
+<div class="nav" style="padding-bottom:4px">
+  <span class="back" data-back="S17">${ic('back',22)}</span>
+  <span style="color:#8A8496;margin-left:auto">${ic('bookmark',20)}</span>
+</div>
+<div class="scroll" style="padding:0 20px 20px">
+  <div style="height:128px;border-radius:22px;background:linear-gradient(120deg,#FB724F,#B83685);background-image:url('${img('2_652-2_210-20261108_123014075.png')}');background-size:cover;background-position:center;margin-bottom:14px"></div>
+  <h1 class="title" style="font-size:20px;line-height:1.35">数据仪表板入门：Tableau 实作</h1>
+  <p class="subline">6 章 · 60 分钟 · 免费</p>
+  <div class="subline" style="font-size:11.5px;margin-top:10px">适合对象：数据分析新手、想补仪表板能力的应届毕业生</div>
+  <div class="row gap8" style="margin-top:14px">
+    <div class="pbar" style="flex:1;margin:0"><i style="width:17%"></i></div>
+    <span style="font-size:10.5px;color:#8A8496">已完成 1／6 章</span>
+  </div>
+  <div class="sec-t" style="margin:18px 0 8px">课程简介</div>
+  <div style="font-size:11.5px;color:#4A4560;line-height:1.72">由零开始建立第一个互动仪表板，用一个实习项目数据完成 4 张图表，并学会向面试官说明你的分析思路。</div>
+  <div class="sec-t" style="margin:18px 0 8px">课程章节</div>
+  ${['01　界面与数据连接（已完成）','02　第一张条形图：比较各区销售','03　折线图与时间趋势','04　筛选器与互动仪表板','05　把图表说成一个故事','06　作品集排版与面试演练'].map(function(c,i){
+    return '<div class="row gap8" style="padding:10px 0;border-bottom:1px solid #F4EBE4;font-size:11.5px;color:'+(i===0?'#8A8496':'#4A4560')+'">'
+     +'<span style="width:6px;height:6px;border-radius:50%;background:'+(i===0?'#2E9E7E':'#E3D5CB')+'"></span>'+c+'</div>';
+  }).join('')}
+  <div class="subline" style="font-size:11px;margin-top:14px;line-height:1.62">学习成果：完成后可独立制作 1 份数据仪表板作品，并回答「你如何验证分析结果」类面试题。</div>
+  <div style="font-size:11px;font-weight:500;color:#E0523A;margin-top:10px">相关职位：数据分析师、商业分析师、数据运营专员</div>
+</div>
+<div class="bottom-bar"><button class="btn">继续学习（第 2 章）</button></div>`;
+
+/* S19 emotion station */
+S.S19 = sb('dark')+`
+<div class="scroll" style="padding:6px 20px 12px">
+  <h1 class="title">情绪充电站</h1>
+  <p class="subline" style="margin-bottom:14px">求职是一段长跑，先把心情照顾好。</p>
+  <div class="seg" style="margin-bottom:14px">
+    <div data-back="S17">技能与求职课程</div><div class="on">情绪充电站</div>
+  </div>
+  <div class="card" style="border-radius:20px;padding:14px;margin-bottom:16px;border-color:#F3E7DE">
+    <div class="row gap10">
+      <img src="${img('2_727-20261108_123037575.png')}" style="width:44px;height:44px;border-radius:12px;object-fit:cover">
+      <div class="grow">
+        <div style="font-size:14px;font-weight:700;color:var(--ink)">奶糯小羊</div>
+        <div style="font-size:10.5px;color:#7A7598;margin-top:2px">情绪支持伙伴 · 原创示范角色</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#4A4560;line-height:1.62;margin:11px 0 11px">今天想聊什么？不用把情绪整理好才来。</p>
+    <button class="btn ghost" style="height:40px;font-size:13px" data-go="S20">陪我聊一聊</button>
+  </div>
+  <div class="sec-t" style="margin-bottom:10px">今天的心情</div>
+  <div class="mood" style="margin-bottom:18px">
+    <span>还不错</span><span>有点焦虑</span><span>很累</span><span>有力量</span>
+  </div>
+  <div class="sec-t" style="margin-bottom:10px">想从哪里开始？</div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+    <div class="tile" data-go="S20"><div class="tt">我有点焦虑</div><div class="td">先做 1 分钟呼吸</div></div>
+    <div class="tile" data-go="S20"><div class="tt">我面试失败了</div><div class="td">一起看看学到什么</div></div>
+    <div class="tile" data-go="S20"><div class="tt">陪我整理一下心情</div><div class="td">说出来就轻一点</div></div>
+    <div class="tile" data-go="S20"><div class="tt">开始一分钟放松</div><div class="td">跟着节奏吸气吐气</div></div>
+  </div>
+  <div class="note2">提供日常情绪支持，不替代专业心理服务。情绪纪录预设私人，不会提供给招聘企业，也不纳入职位配对。</div>
+</div>
+${tabbar('课堂')}`;
+
+/* S20 sheep chat */
+S.S20 = sb('dark')+`
+<div class="chat-head">
+  <span class="back" data-back="S17">${ic('back',22)}</span>
+  <img src="${img('2_727-20261108_123037575.png')}">
+  <div class="grow"><div class="nm">奶糯小羊</div><div class="st">情绪支持 · 示范对话内容</div></div>
+  <span style="color:#8A8496">${ic('more',18)}</span>
+</div>
+<div class="chat-body">
+  <div class="note" style="margin:0">提供日常情绪支持，不替代专业心理服务。</div>
+  <div class="bubble">谢谢你愿意说出来。面试之后觉得累，是很正常的反应，不代表你做得不好。</div>
+  <div class="bubble me" style="max-width:312px">我等了三星期都没有回复，觉得自己很差。</div>
+  <div class="bubble">等待没有回音，很容易让人怀疑自己。不过这三星期里，有没有做过一件让你觉得「还不错」的小事？我们可以先从那里开始。</div>
+  <div class="bubble" style="background:#F1FAF5;border-color:#D9EFE5;max-width:302px">
+    <div style="font-weight:700;color:#10132B;margin-bottom:6px">一分钟放松练习</div>
+    <div style="color:#4A4560">吸气 4 秒 → 屏息 2 秒 → 吐气 6 秒，重复 6 次。做完可以再决定要不要继续聊。</div>
+    <div style="margin-top:10px;text-align:center;font-size:11.5px;font-weight:600;color:#2E9E7E;border:1px solid #BFE6D6;border-radius:100px;padding:7px 0">现在开始</div>
+  </div>
+  <div class="quick-reply">
+    <span>我想说说那件事</span><span>先做呼吸练习</span><span>帮我记录今天心情</span>
+  </div>
+</div>
+<div class="chat-input">
+  <div class="rd">${ic('smile',18)}</div>
+  <div class="in">想说什么都可以…</div>
+  <div class="sd">${ic('send',16)}</div>
+</div>`;
+
+/* S21 posts */
+function myTabs(active){
+  const t=['动态','申请状态','已儲存','已申请'];
+  const map={'动态':'S21','申请状态':'S22','已儲存':'S23','已申请':'S22'};
+  return '<div class="chips" style="gap:0;overflow:auto;padding:0 20px 12px;border-bottom:1px solid #F1E7DE">'
+   + t.map(function(x){
+      const on=x===active;
+      return '<div data-go="'+map[x]+'" style="padding:8px 12px;font-size:12px;font-weight:'+(on?'700':'400')+';color:'+(on?'#10132B':'#8A8496')+';position:relative;cursor:pointer;white-space:nowrap">'+x
+        +(on?'<span style="position:absolute;left:12px;right:12px;bottom:0;height:2px;border-radius:2px;background:#F0563F"></span>':'')+'</div>';
+    }).join('') + '</div>';
+}
+S.S21 = sb('dark')+`
+<div class="nav" style="padding-bottom:6px"><span class="t">我的动态</span><span class="act">发文</span></div>
+${myTabs('动态')}
+<div class="scroll" style="padding-top:12px">
+  <div class="note" style="margin:0 20px 12px">发文前提醒：请勿公开电话、身分证号码或完整 CV。示范社群内容。</div>
+  <div class="post">
+    <div class="ph"><span class="av-sm">陈</span><div><div class="pn">陈晓恩</div><div class="pt">2 小时前 · 公开</div></div></div>
+    <div class="pc">想问问大家：面试后等了三星期都没有回音，应该主动再问一次吗？还是直接当作没机会？</div>
+    <div class="acts"><span>赞 24</span><span>留言 8</span><span>收藏</span><span>举报</span></div>
+  </div>
+  <div class="post">
+    <div class="ph"><span style="width:34px;height:34px;border-radius:50%;background:#F1EFFB;color:#6B57A8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">康</span><div><div class="pn">阿康</div><div class="pt">昨天 · 公开</div></div></div>
+    <div class="pc">分享一个小技巧：把实习做过的报表整理成 3 页作品集，面试官问「你做过什么」时，会容易说明很多。</div>
+    <div class="acts"><span>赞 18</span><span>留言 5</span><span>收藏</span><span>举报</span></div>
+  </div>
+  <div class="post">
+    <div class="ph"><span class="av-sm">陈</span><div><div class="pn">陈晓恩</div><div class="pt">3 天前 · 公开</div></div></div>
+    <div class="pc">这周在腾讯全球总部参加 2026 腾讯全球数字生态大会，第一次近距离看到大厂的展厅和产品演示，也更清楚自己想投什么岗位了。附几张现场照片给大家看看。</div>
+    <div class="pics">
+      <i style="background-image:url('${img('73_17-20261108_123038352.png')}')"></i>
+      <i style="background-image:url('${img('73_18-20261108_123038709.png')}')"></i>
+      <i style="background-image:url('${img('73_19-20261108_123038985.png')}')"></i>
+    </div>
+    <div class="acts"><span>赞 12</span><span>留言 3</span><span>收藏</span><span>举报</span></div>
+  </div>
+</div>
+${tabbar('动态')}`;
+
+/* S22 applications */
+S.S22 = sb('dark')+`
+<div class="nav" style="padding-bottom:6px"><span class="t">我的动态</span><span class="act">新增纪录</span></div>
+${myTabs('申请状态')}
+<div class="scroll" style="padding-top:12px">
+  <div class="row" style="padding:0 20px 16px">
+    <div class="stat"><div class="n">6</div><div class="l">已投递</div></div>
+    <div class="stat"><div class="n">2</div><div class="l">面试</div></div>
+    <div class="stat"><div class="n">3</div><div class="l">等待回复</div></div>
+    <div class="stat"><div class="n">0</div><div class="l">已录取</div></div>
+  </div>
+  <div class="appc card-grad">
+    <div class="ah"><div><div class="at">数据分析师 · 星轨数据</div><div class="ac">已投递 · 03/02 更新</div></div><span class="badge">面试中</span></div>
+    <div class="tl">03/02　第一轮面试完成　·　使用者手动更新
+02/24　笔试完成　·　系统同步
+02/18　已投递　·　系统同步</div>
+    <div class="rm">面试时间 3 月 2 日 14:30 · 已设定提前一天提醒</div>
+  </div>
+  <div class="appc">
+    <div class="ah"><div><div class="at">商业分析师 · 蓝鲸金融科技</div><div class="ac">已投递 · 03/01 更新</div></div><span class="badge" style="background:#F1EFFB;color:#6B57A8">待面试</span></div>
+    <div class="tl">03/05　视讯面试（待进行）
+03/01　收到面试邀请　·　系统同步
+02/26　已投递　·　系统同步</div>
+  </div>
+  <div class="appc">
+    <div class="ah"><div><div class="at">程序开发 · 腾讯</div><div class="ac">已投递 · 03/02 更新</div></div><span class="badge" style="background:#F1EFFB;color:#6B57A8">待面试</span></div>
+    <div class="tl">03/06　第一轮视讯面试（待进行）
+03/02　收到面试邀请　·　系统同步
+02/26　已投递　·　系统同步</div>
+  </div>
+  <div style="height:12px"></div>
+</div>
+${tabbar('动态')}`;
+
+/* S23 saved */
+S.S23 = sb('dark')+`
+<div class="nav" style="padding-bottom:6px"><span class="t">我的动态</span><span class="act">编辑</span></div>
+${myTabs('已儲存')}
+<div class="scroll" style="padding-top:12px">
+  <div class="between" style="padding:0 20px 10px">
+    <span style="font-size:11.5px;font-weight:500;color:#8A8496">已储存 12 个职位</span>
+    <span class="row gap6" style="font-size:11px;color:#8A8496">依截止日期 ${ic('down',12)}</span>
+  </div>
+  <div class="chips" style="padding:0 20px 12px"><span class="chip">筛选</span><span class="chip on">依截止日期</span></div>
+  ${[
+    ['2_936-2_186-20261108_123028885.png','市场研究助理（毕业生计划）','星轨数据有限公司 · 深圳','HK$19,000–23,000／月','深圳 · 全职 · 学士 · 3/20 截止','推荐理由：你修过市场研究，与这个职位的访谈工作相近。'],
+    ['2_937-2_186-20261108_123029218.png','内容运营专员','木棉生活科技 · 深圳','HK$16,000–18,000／月','深圳 · 全职 · 文凭 · 4/2 截止','推荐理由：实习期间的内容制作经验可直接应用。'],
+    ['73_26-2_186-20261108_123036706.png','行政助理','蓝湾数字设计 · 深圳','HK$14,000–17,000／月','深圳 · 全职 · 文凭 · 4/20 截止','推荐理由：文书整理与行政协调经验可直接上手。']
+  ].map(function(j){
+    return '<div class="jcard card-grad"><span class="heart" style="color:#E0523A">'+ic('bookmark',18)+'</span>'
+     +'<div class="top"><div class="lg" style="background-image:url(\''+img(j[0])+'\')"></div>'
+     +'<div class="grow"><div class="jt">'+j[1]+'</div><div class="jc">'+j[2]+'</div></div></div>'
+     +'<div class="pay">'+j[3]+'</div><div class="jm">'+j[4]+'</div>'
+     +'<div class="why">'+j[5]+'</div>'
+     +'<div class="foot"><span class="match"></span><span class="more" data-go="S13">查看详情</span></div></div>';
+  }).join('')}
+  <div style="height:12px"></div>
+</div>
+${tabbar('动态')}`;
+
+/* S24 messages */
+S.S24 = sb('dark')+`
+<div class="nav" style="padding-bottom:8px">
+  <span class="back" data-back="S23">${ic('back',22)}</span>
+  <span class="t">讯息</span>
+  <span class="act">全部标记已读</span>
+</div>
+<div class="scroll" style="padding-top:4px">
+  ${[
+    ['heart','赞和收藏','阿康 赞了你的贴文','刚刚',true],
+    ['user','新增追踪','2 位新追踪者','10 分钟前',true],
+    ['comment','评论和 @','陈小明 回复了你的问题','1 小时前',true],
+    ['chat','私人讯息','星轨数据（示范）：想邀请你面试','昨天',false]
+  ].map(function(m){
+    return '<div class="row gap12" style="background:#fff;border:1px solid #F0E4DC;border-radius:16px;padding:12px;margin:0 20px 10px;cursor:pointer">'
+     +'<div style="width:38px;height:38px;border-radius:12px;background:#FDF0EA;color:#E0523A;display:flex;align-items:center;justify-content:center;flex:0 0 38px">'+ic(m[0],19)+'</div>'
+     +'<div class="grow"><div style="font-size:12.5px;font-weight:600;color:var(--ink)">'+m[1]+'</div>'
+     +'<div style="font-size:10.5px;color:#8A8496;margin-top:3px">'+m[2]+'</div></div>'
+     +'<div style="text-align:right"><div style="font-size:10px;color:#B9B3A8">'+m[3]+'</div>'
+     +(m[4]?'<div class="dot" style="margin:6px 0 0 auto"></div>':'')+'</div></div>';
+  }).join('')}
+  <div style="background:#fff;border:1px solid #F0E4DC;border-radius:16px;padding:13px;margin:0 20px 14px">
+    <div class="row gap10" style="margin-bottom:10px">
+      <img src="${img('88_21-20261108_123113106.png')}" style="width:38px;height:38px;border-radius:12px;object-fit:cover">
+      <div class="grow"><div class="row gap6"><span style="font-size:12.5px;font-weight:600;color:var(--ink)">星轨数据有限公司</span><span class="badge" style="background:#F1EFF5;color:#8A8496">示范讯息</span></div></div>
+    </div>
+    <div style="font-size:11.5px;color:#4A4560;line-height:1.75">「你好，我们看到你的申请，想邀请你参加第一轮视讯面试。」此讯息由示范资料产生，并非真实企业联络。</div>
+  </div>
+</div>`;
+
+/* S25 mine */
+S.S25 = sb('dark')+`
+<div class="nav" style="padding-bottom:10px"><span class="t">我的</span></div>
+<div class="scroll" style="padding-top:2px">
+  <div class="profile card-grad">
+    <div class="row gap12">
+      <div class="av-me">陈</div>
+      <div class="grow"><div class="nm">陈晓恩</div><div class="sc">深圳大学 · 计算机专业</div></div>
+    </div>
+    <div class="row between" style="margin-top:14px;font-size:11px;color:#8A8496">
+      <span>档案完整度</span><span style="font-weight:600;color:#E0523A">78%</span>
+    </div>
+    <div class="pbar" style="margin-top:8px"><i style="width:78%"></i></div>
+  </div>
+  <div style="height:14px"></div>
+  <div class="li" data-go="S7">
+    <div class="ic">${ic('user',19)}</div>
+    <div class="grow"><div class="lt">个人职业档案</div><div class="ls">学历、技能、经历与求职意愿</div></div>
+    <span class="lv">78%</span>
+  </div>
+  <div class="li" data-go="S26">
+    <div class="ic">${ic('chart',19)}</div>
+    <div class="grow"><div class="lt">职涯发展报告</div><div class="ls">优势、能力差距与 30／60／90 天计划</div></div>
+    <span class="lv">2 月 20 日</span>
+  </div>
+  <div class="li" data-go="S22">
+    <div class="ic">${ic('pulse',19)}</div>
+    <div class="grow"><div class="lt">求职进度报告</div><div class="ls">6 个申请 · 2 场面试 · 3 个待回复</div></div>
+    <span class="lv">本周</span>
+  </div>
+  <div class="li" data-go="S27">
+    <div class="ic">${ic('settings',19)}</div>
+    <div class="grow"><div class="lt">设定</div><div class="ls">帐户安全、私隐、通知与语言</div></div>
+    <span class="lv">${ic('arrow',16)}</span>
+  </div>
+  <div class="note2" style="margin:6px 20px 16px">补充「软技能」与「项目经历」，可让配对参考更准确。</div>
+</div>
+${tabbar('我的')}`;
+
+/* S26 report */
+S.S26 = sb('dark')+`
+<div class="nav" style="padding-bottom:8px">
+  <span class="back" data-back="S25">${ic('back',22)}</span>
+  <span class="t" style="font-size:20px">职涯发展报告</span>
+  <span class="act">导出 PDF</span>
+</div>
+<div class="scroll" style="padding:0 20px 22px">
+  <div class="rep">
+    <div class="rt">你的优势摘要</div>
+    <div class="rc">系统从你的档案归纳出 3 项优势：统计与 Python 自评 4／5，高于同阶段候选人；市场部实习让你熟悉真实业务数据的整理；你能把分析结论讲成业务听得懂的话。这 3 项是你现在最稳的筹码。</div>
+  </div>
+  <div class="rep">
+    <div class="rt">建议职业方向（系统推论）</div>
+    <div class="item">1｜初阶数据分析师（匹配度最高）— 统计、Python、SQL 已覆盖岗位主要要求，缺口在仪表板工具。市场职缺最多、起薪稳定，适合作为第一份数据岗。</div>
+    <div class="item">2｜商业分析师（次高匹配）— 你的业务理解与沟通表达（4／5）可直接迁移，报告撰写与跨部门对齐已具备；缺口在实验设计与财务基础。转职路径更宽，可向产品运营延伸。</div>
+  </div>
+  <div class="rep">
+    <div class="rt">能力与岗位要求对照</div>
+    <div class="rc">已达岗位要求（4／5）：Python、SQL、统计、沟通表达，可直接写进履历技能栏。仍待补强（2／5）：仪表板工具、实验设计、作品集完整度，是未来 30 天最该投入的 3 项。</div>
+  </div>
+  <div class="rep">
+    <div class="rt">未来 30／60／90 天行动计划</div>
+    <div class="item">30 天｜补工具缺口：完成 Tableau 入门课程（每周 3 小时），用公开数据集做 1 份完整仪表板，把「仪表板工具」从 2／5 提到 3／5。</div>
+    <div class="item">60 天｜换取面试机会：投递 10 个初阶数据职位；每场面试后 24 小时内记下被问到的题目，累积成自己的题库。</div>
+    <div class="item">90 天｜收尾与转向：把作品集整理成 3 页（问题、方法、结论），演练 5 条行为面试题，同步投递商业分析职位。</div>
+  </div>
+  <div class="note2">以上内容区分：事实（你填写的档案资料）、推论（系统分析）、建议（行动方向）。本报告为示范内容。</div>
+</div>`;
+
+/* S27 settings */
+S.S27 = sb('dark')+`
+<div class="nav" style="padding-bottom:8px">
+  <span class="back" data-back="S25">${ic('back',22)}</span>
+  <span class="t">设定</span>
+</div>
+<div class="scroll" style="padding-bottom:24px">
+  <div class="grp">帐户</div>
+  <div class="li" style="margin-bottom:8px"><div class="ic">${ic('shield',19)}</div>
+    <div class="grow"><div class="lt">帐户与登录安全</div><div class="ls">电子邮件、密码、双重验证</div></div><span class="lv">${ic('arrow',16)}</span></div>
+  <div class="li" style="margin-bottom:4px"><div class="ic" style="background:#F3EFFB;color:#6B57A8">${ic('send',19)}</div>
+    <div class="grow"><div class="lt">登出所有装置</div><div class="ls">上次登录：3 月 1 日 21:40</div></div><span class="lv">${ic('arrow',16)}</span></div>
+
+  <div class="grp">个人档案可见度</div>
+  <div class="card" style="margin:0 20px 4px;padding:6px">
+    <div class="opt on"><span style="flex:1">仅自己（预设）</span>${ic('check',15)}</div>
+    <div class="opt"><span style="flex:1">指定企业</span></div>
+    <div class="opt"><span style="flex:1">公开</span></div>
+  </div>
+
+  <div class="grp">通知与显示</div>
+  <div class="li" style="margin-bottom:4px"><div class="ic">${ic('bell',19)}</div>
+    <div class="grow"><div class="lt">通知偏好</div><div class="ls">职位提醒、讯息、课程通知</div></div><span class="lv">${ic('arrow',16)}</span></div>
+  <div class="li" style="margin-bottom:4px"><div class="ic">${ic('globe',19)}</div>
+    <div class="grow"><div class="lt">语言与国家／地区</div><div class="ls">简体中文 · 深圳</div></div><span class="lv">${ic('arrow',16)}</span></div>
+
+  <div class="grp">资料与私隐</div>
+  <div class="li" style="margin-bottom:4px"><div class="ic" style="background:#F1EFF5;color:#6E6A80">${ic('doc',19)}</div>
+    <div class="grow"><div class="lt">私隐政策及服务条款</div><div class="ls">了解资料如何被使用与保存</div></div><span class="lv">${ic('arrow',16)}</span></div>
+  <div class="li" style="margin-bottom:4px"><div class="ic" style="background:#F1EFF5;color:#6E6A80">${ic('shield2',19)}</div>
+    <div class="grow"><div class="lt">导出或删除个人资料</div><div class="ls">提出后会收到确认信，7 日内完成</div></div><span class="lv">${ic('arrow',16)}</span></div>
+
+  <button class="btn ghost" style="margin:18px 20px 0;width:calc(100% - 40px)" data-go="S4">登出</button>
+  <div class="note2" style="margin:16px 20px 0">删除帐户会在「帐户与登录安全」内提供，需再次输入密码确认。敏感资料预设不公开；传送资料予企业前会再次请你确认。</div>
+</div>`;
+
+/* ---------------- build ---------------- */
+const ORDER = [
+  ['S1','开场动画 A'],['S2','开场动画 B'],['S3','开场动画 C'],['S4','启动画面'],['S5','登录'],
+  ['S6','注册'],['S7','引导① 学历'],['S8','引导② 技能'],['S9','求职意愿'],['S10','引导③ 意愿'],
+  ['S11','首页'],['S12','搜索结果'],['S13','职位详情'],['S14','申请确认'],['S15','申请成功'],
+  ['S16','DIMOO 对话'],['S17','就业课堂'],['S18','课程详情'],['S19','情绪充电站'],['S20','奶糯小羊对话'],
+  ['S21','我的动态'],['S22','申请状态'],['S23','已储存职位'],['S24','讯息'],['S25','我的'],
+  ['S26','职涯发展报告'],['S27','设定']
+];
+
+const phone = document.getElementById('phone');
+phone.innerHTML = ORDER.map(function(o){
+  return '<section class="screen" id="'+o[0]+'" data-name="'+o[1]+'">'+S[o[0]]+'</section>';
+}).join('');
+
+const idx = document.getElementById('idx');
+idx.innerHTML = ORDER.map(function(o,i){
+  return '<button data-jump="'+o[0]+'"><b>S'+(i+1)+'</b><span>'+o[1]+'</span></button>';
+}).join('');
+
+/* ---------------- navigation ---------------- */
+let current = null;
+let stack = [];
+const screens = Array.from(document.querySelectorAll('.screen'));
+
+function show(id, push){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(current && current !== id && push !== false){ stack.push(current); }
+  screens.forEach(function(s){ s.classList.remove('on'); });
+  el.classList.add('on');
+  el.querySelectorAll('.scroll, .chat-body, .succ').forEach(function(b){ b.scrollTop = 0; });
+  current = id;
+  document.querySelectorAll('#idx button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.jump === id);
+  });
+}
+function go(id){ show(id, true); }
+function back(){ const p = stack.pop(); show(p || 'S11', false); }
+window.restart = function(){ stack.length = 0; show('S1', false); };
+
+phone.addEventListener('click', function(e){
+  const jump = e.target.closest('[data-jump]');
+  const backEl = e.target.closest('[data-back]');
+  const goEl = e.target.closest('[data-go]');
+  if(backEl){ e.stopPropagation(); back2(backEl.dataset.back); return; }
+  if(goEl){ e.stopPropagation();
+    if(goEl.id === 'btnCreate'){
+      const cb = document.getElementById('cbTerms');
+      if(cb && !cb.classList.contains('on')){ cb.style.boxShadow='0 0 0 3px rgba(240,86,63,.25)'; setTimeout(function(){cb.style.boxShadow='';},700); }
+    }
+    go(goEl.dataset.go); return;
+  }
+});
+function back2(id){ show(id, false); }
+
+/* chips toggle */
+phone.addEventListener('click', function(e){
+  const chip = e.target.closest('.chip');
+  if(chip && !chip.closest('[data-go]') && chip.textContent.indexOf('×')<0) chip.classList.toggle('on');
+  const box = e.target.closest('.checkbox');
+  if(box){ box.classList.toggle('on'); if(box.classList.contains('on')) box.innerHTML='<svg viewBox="0 0 24 24" width="11" height="11"><path d="M4 12.5 9.5 18 20 6.5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'; else box.innerHTML=''; }
+  const career = e.target.closest('.career');
+  if(career){ const t = career.querySelector('.tick'); t.classList.toggle('on'); }
+  const opt = e.target.closest('.opt');
+  if(opt){ opt.parentNode.querySelectorAll('.opt').forEach(function(o){o.classList.remove('on');}); opt.classList.add('on'); }
+  const sw = e.target.closest('.switch');
+  if(sw) sw.classList.toggle('on');
+});
+
+idx.addEventListener('click', function(e){
+  const b = e.target.closest('[data-jump]');
+  if(b){ stack.length = 0; show(b.dataset.jump, false); }
+});
+
+/* scale */
+function fit(){
+  const stage = document.querySelector('.stage');
+  const inner = document.getElementById('stageInner');
+  const w = stage.clientWidth, h = stage.clientHeight;
+  const s = Math.min((w - 120) / 390, (h - 90) / 844, 1);
+  inner.style.transform = 'scale(' + s + ')';
+}
+
+/* auto play intro */
+let introTimer = null;
+function playIntro(){
+  clearTimeout(introTimer);
+  introTimer = setTimeout(function(){ if(current==='S1') show('S2'); },1400);
+  setTimeout(function(){ if(current==='S2') show('S3'); },3000);
+  setTimeout(function(){ if(current==='S3') show('S4'); },4400);
+}
+
+window.addEventListener('resize', fit);
+fit();
+const startHash = (location.hash || '').replace('#', '');
+if(startHash && S[startHash]){ show(startHash, false); }
+else { show('S1', false); playIntro(); }
+</script>
+</body>
+</html>
