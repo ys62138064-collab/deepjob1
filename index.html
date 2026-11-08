@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deepjob · 求职 App 界面集（27 屏 + 交互原型）</title>
+<meta name="description" content="Deepjob 求职 App 的 27 个界面设计稿与可点击交互原型：开场启动、登录引导、职位搜索、申请状态、对话与成长、个人中心。">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-root="./" data-page="home">
+
+<header class="site-header" data-header></header>
+
+<main>
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div>
+        <span class="eyebrow">Deepjob · Mobile UI Kit 2026</span>
+        <h1>求职 App 的<br><span class="grad-text">27 个界面</span>，<br>一页一页看清楚。</h1>
+        <p class="lead">
+          从开场动效到拿到 offer 的每一步：登录建档、职位搜索、申请与状态追踪，
+          以及 DIMOO 求职助手与情绪支持。除了静态画廊，还附带一个可点击的交互原型。
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="pages/all.html">浏览全部界面 →</a>
+          <a class="btn btn-ghost" href="prototype.html">进入交互原型</a>
+          <button class="btn btn-ghost" type="button" data-random>随机看一页</button>
+        </div>
+        <div class="hero-stats">
+          <div><strong>27</strong><span>界面画面</span></div>
+          <div><strong>06</strong><span>流程章节</span></div>
+          <div><strong>390×870</strong><span>设计尺寸</span></div>
+          <div><strong>2</strong><span>浏览方式：画廊 / 原型</span></div>
+        </div>
+      </div>
+
+      <div class="phone-stack" aria-hidden="true">
+        <div class="p p1"><img src="images/s04.png" alt="" loading="eager"></div>
+        <div class="p p2"><img src="images/s11.png" alt="" loading="eager"></div>
+        <div class="p p3"><img src="images/s26.png" alt="" loading="eager"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-sections">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Chapters</span>
+          <h2>按求职流程分章浏览</h2>
+          <p>六个章节串起用户从第一次打开，到建档、投递、提升与个人管理的完整路径。</p>
+        </div>
+        <a class="btn btn-ghost" href="pages/all.html">一次看完 27 屏</a>
+      </div>
+      <div class="section-grid" data-sections></div>
+    </div>
+  </section>
+
+  <section class="home-sections">
+    <div class="wrap">
+      <div class="section-card reveal" style="cursor:default">
+        <div class="body" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;padding:30px 30px">
+          <div style="max-width:640px">
+            <span class="eyebrow">Interactive prototype</span>
+            <h3 style="font-size:24px;margin:10px 0 8px">同一套流程的交互原型</h3>
+            <p style="-webkit-line-clamp:6;color:var(--muted);font-size:14px;margin:0">
+              原站点中的 <code>index.html</code> 交互原型已保留为 <code>prototype.html</code>：
+              左侧选择 S1–S27 任意画面，右侧手机里是可直接操作的界面；它引用的
+              <code>assets/images</code>、<code>assets/svg</code> 资源完整保留，与本画廊共用一套 <code>assets</code> 目录。
+            </p>
+          </div>
+          <a class="btn btn-primary" href="prototype.html">打开原型 ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" data-footer></footer>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/main.js" defer></script>
+</body>
+</html>
